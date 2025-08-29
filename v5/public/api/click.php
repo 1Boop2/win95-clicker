@@ -1,0 +1,23 @@
+<?php
+declare(strict_types=1);
+require_once __DIR__ . '/../../config.php';
+require_once __DIR__ . '/../../inc/lib.php';
+$uid=require_login(); require_csrf();
+$in=json_decode(file_get_contents('php://input'),true)??[]; $count=max(1,(int)($in['count']??1));
+apply_auto_income($uid);
+$f=compute_factors($uid); $cpc=max(1,(int)floor(1*$f['manual_mult']));
+$gain=$cpc*$count;
+
+$pdo = db();
+
+// ограничитель 50 кликов/сек на пользователя
+$rl = rl_allow_click($pdo, $uid);
+if (!$rl['ok']) {
+  $retry = (int)($rl['retry_after'] ?? 1);
+  json_response(['ok'=>false,'error'=>'rate_limit','retry_after'=>$retry]);
+}
+try{ $pdo->prepare("UPDATE stats SET balance=balance+?, total_clicks=total_clicks+? WHERE user_id=?")->execute([$gain,$count,$uid]); $pdo->commit(); }
+catch(Throwable $e){ if($pdo->inTransaction()) $pdo->rollBack(); throw $e; }
+$cps=log_click_and_cps($uid,$count); $_new=check_achievements($uid);
+$st=$pdo->prepare("SELECT balance,total_clicks FROM stats WHERE user_id=?"); $st->execute([$uid]); $cur=$st->fetch();
+json_response(['ok'=>true,'balance'=>(int)$cur['balance'],'total_clicks'=>(int)$cur['total_clicks'],'cps'=>round($cps,2)]);

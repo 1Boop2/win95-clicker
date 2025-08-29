@@ -1,0 +1,9 @@
+<?php
+declare(strict_types=1);
+require_once __DIR__ . '/../../config.php';
+require_once __DIR__ . '/../../inc/lib.php';
+$uid=require_login(); require_csrf(); apply_auto_income($uid); check_achievements($uid);
+$defs=ach_definitions(); $set=get_user_ach_set($uid);
+$pdo=db(); $ts=$pdo->prepare("SELECT code, unlocked_at FROM user_achievements WHERE user_id=?"); $ts->execute([$uid]); $times=[]; foreach($ts as $r){ $times[$r['code']]=$r['unlocked_at']; }
+$list=[]; foreach($defs as $d){ $code=$d['code']; $list[]=['code'=>$code,'name'=>$d['name'],'desc'=>$d['desc']??'','icon'=>$d['icon']??'🏅','type'=>$d['type']??'stat','unlocked'=>isset($set[$code]),'unlocked_at'=>$times[$code]??null]; }
+json_response(['ok'=>true,'list'=>$list]);
