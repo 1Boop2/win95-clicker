@@ -1,0 +1,24 @@
+/* Win95-style scroll pane for big admin lists */
+.scroll-pane-95{
+  max-height: 800px;
+  overflow: auto;
+  background: #ffffff;
+  border: 2px inset #bdbdbd;
+  padding: 6px;
+}
+/* optional: make admin table narrower and sticky header */
+.admin-table{
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.admin-table th, .admin-table td{
+  border: 1px solid #000;
+  padding: 4px 6px;
+}
+.admin-table thead th{
+  position: sticky;
+  top: 0;
+  background: #c0c0c0;
+  z-index: 1;
+}
